@@ -1,16 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
-
-interface RegistrationData {
-  childName: string;
-  childSurname: string;
-  childAge: string;
-  parentName: string;
-  parentSurname: string;
-  parentPhone: string;
-  timestamp: string;
-  id: string;
-}
+import { getRegistrations } from '@/app/lib/storage';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'georgian2024'; // Change this in production
 
@@ -26,20 +15,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Read registrations from KV
-    let registrations: RegistrationData[] = [];
-    try {
-      const existingData = await kv.get('registrations');
-      registrations = existingData ? JSON.parse(existingData as string) : [];
-    } catch (error) {
-      console.error('Error reading from KV:', error);
-      registrations = [];
-    }
+    // Get registrations using shared storage module
+    const { data: registrations, method } = await getRegistrations();
 
     // Sort by timestamp (newest first)
     registrations.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-    return NextResponse.json({ registrations });
+    return NextResponse.json({ 
+      registrations,
+      storageMethod: method,
+      warning: method.includes('memory') ? 'Data from memory storage (may be incomplete). Please set up Vercel KV for persistent storage.' : undefined
+    });
   } catch (error) {
     console.error('Admin API error:', error);
     return NextResponse.json(

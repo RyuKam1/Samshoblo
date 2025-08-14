@@ -1,16 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
-
-interface RegistrationData {
-  childName: string;
-  childSurname: string;
-  childAge: string;
-  parentName: string;
-  parentSurname: string;
-  parentPhone: string;
-  timestamp: string;
-  id: string;
-}
+import { addRegistration, RegistrationData } from '@/app/lib/storage';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,30 +23,32 @@ export async function POST(request: NextRequest) {
       id: generateId()
     };
 
-    // Get existing registrations from KV
-    let registrations: RegistrationData[] = [];
-    try {
-      const existingData = await kv.get('registrations');
-      registrations = existingData ? JSON.parse(existingData as string) : [];
-    } catch (error) {
-      console.error('Error reading from KV:', error);
-      registrations = [];
+    // Save registration using shared storage module
+    const { success, method } = await addRegistration(registration);
+
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Failed to save registration. Please try again.' },
+        { status: 500 }
+      );
     }
 
-    // Add new registration
-    registrations.push(registration);
-
-    // Store back to KV
-    await kv.set('registrations', JSON.stringify(registrations));
-
     return NextResponse.json(
-      { message: 'Registration submitted successfully', id: registration.id },
+      { 
+        message: 'Registration submitted successfully', 
+        id: registration.id,
+        storageMethod: method,
+        warning: method.includes('memory') ? 'Data stored in memory (will be lost on server restart). Please set up Vercel KV for persistent storage.' : undefined
+      },
       { status: 201 }
     );
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
