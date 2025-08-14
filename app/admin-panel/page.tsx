@@ -22,6 +22,14 @@ export default function AdminPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [storageStats, setStorageStats] = useState<{
+    totalRegistrations: number;
+    maxCapacity: number;
+    storageUsed: number;
+    capacityPercentage: number;
+    estimatedRemainingCapacity: number;
+    storageMethod: string;
+  } | null>(null);
 
   const fetchRegistrations = async () => {
     setIsRefreshing(true);
@@ -39,6 +47,17 @@ export default function AdminPanel() {
       if (response.ok) {
         const data = await response.json();
         setRegistrations(data.registrations);
+        
+        // Fetch storage statistics
+        try {
+          const statsResponse = await fetch('/api/storage-stats');
+          if (statsResponse.ok) {
+            const statsData = await statsResponse.json();
+            setStorageStats(statsData);
+          }
+        } catch (statsError) {
+          console.error('Failed to fetch storage stats:', statsError);
+        }
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to fetch registrations');
@@ -68,6 +87,17 @@ export default function AdminPanel() {
         const data = await response.json();
         setRegistrations(data.registrations);
         setIsAuthenticated(true);
+        
+        // Fetch storage statistics
+        try {
+          const statsResponse = await fetch('/api/storage-stats');
+          if (statsResponse.ok) {
+            const statsData = await statsResponse.json();
+            setStorageStats(statsData);
+          }
+        } catch (statsError) {
+          console.error('Failed to fetch storage stats:', statsError);
+        }
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Authentication failed');
@@ -168,6 +198,34 @@ export default function AdminPanel() {
               <span>{isRefreshing ? t('refreshing') : t('refresh')}</span>
             </button>
           </div>
+          
+          {/* Storage Statistics */}
+          {storageStats && (
+            <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+                <div>
+                  <div className="text-blue-400 font-semibold text-sm">Capacity</div>
+                  <div className="text-white text-lg font-bold">{storageStats.capacityPercentage}%</div>
+                  <div className="text-gray-400 text-xs">{storageStats.totalRegistrations}/{storageStats.maxCapacity}</div>
+                </div>
+                <div>
+                  <div className="text-green-400 font-semibold text-sm">Remaining</div>
+                  <div className="text-white text-lg font-bold">{storageStats.estimatedRemainingCapacity}</div>
+                  <div className="text-gray-400 text-xs">slots available</div>
+                </div>
+                <div>
+                  <div className="text-yellow-400 font-semibold text-sm">Storage Used</div>
+                  <div className="text-white text-lg font-bold">{storageStats.storageUsed}MB</div>
+                  <div className="text-gray-400 text-xs">of 30MB Redis</div>
+                </div>
+                <div>
+                  <div className="text-purple-400 font-semibold text-sm">Storage Method</div>
+                  <div className="text-white text-sm font-bold">{storageStats.storageMethod}</div>
+                  <div className="text-gray-400 text-xs">data persistence</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Registrations List */}

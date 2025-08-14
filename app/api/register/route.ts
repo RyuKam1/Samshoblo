@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Save registration using shared storage module
-    const { success, method } = await addRegistration(registration);
+    const { success, method, removedCount, totalCount } = await addRegistration(registration);
 
     if (!success) {
       return NextResponse.json(
@@ -38,6 +38,8 @@ export async function POST(request: NextRequest) {
         message: 'Registration submitted successfully', 
         id: registration.id,
         storageMethod: method,
+        totalRegistrations: totalCount,
+        removedCount: removedCount || 0,
         warning: method.includes('memory') ? 'Data stored in memory (will be lost on server restart). Please set up Vercel KV for persistent storage.' : undefined
       },
       { status: 201 }
