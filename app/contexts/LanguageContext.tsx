@@ -63,6 +63,8 @@ const translations = {
     phone: 'ტელეფონი:',
     yearsOld: 'წლის',
     copyDetails: 'დეტალების კოპირება',
+    refresh: 'განახლება',
+    refreshing: 'განახლდება...',
     logout: 'გასვლა'
   },
   english: {
@@ -71,12 +73,12 @@ const translations = {
     agesInfo: 'Ages 5-15 • All skill levels welcome • Professional instruction',
     registerButton: 'Register Now',
     aboutTitle: 'About Our Ensemble',
-    culturalHeritage: 'Cultural Heritage',
-    culturalHeritageDesc: 'We preserve and celebrate the rich traditions of Georgian dance, passing down centuries-old movements and cultural significance to the next generation.',
-    professionalTraining: 'Professional Training',
-    professionalTrainingDesc: 'Our experienced instructors provide comprehensive training in technique, performance skills, and cultural understanding for dancers of all levels.',
-    performanceOpportunities: 'Performance Opportunities',
-    performanceOpportunitiesDesc: 'Regular performances at cultural events, festivals, and special occasions allow our dancers to showcase their skills and share Georgian culture.',
+    culturalHeritage: 'Study Techniques',
+    culturalHeritageDesc: 'You will find a child-focused, caring, friendly, and safe environment where students learn both dance and teamwork using modern, child-specific techniques and approaches. With us, children will receive both practical and theoretical knowledge.',
+    professionalTraining: 'Our Teachers',
+    professionalTrainingDesc: 'Dance will be taught by Levan Tsiklauri, former dancer of Ensemble Erisioni, graduate of Sergo Zakariadze University\'s choreographic direction, lecturer of Georgian choreography theory at Medea Chakhava Theater Academy, and founder of Ensemble Samshoblo. Also by Sopho Omarashvili, graduate of Shota Rustaveli Theater and Film State University\'s choreographic direction and active dancer.',
+    performanceOpportunities: 'Opportunities',
+    performanceOpportunitiesDesc: 'Children will participate in festivals held in Georgia, as well as international competitions outside Georgia\'s borders. Teenagers aged 14+ will have the opportunity to participate in funded competitions abroad.',
     joinTitle: 'Join Our Ensemble',
     joinSubtitle: 'Register your child for the Georgian Dance Ensemble',
     childInfo: 'Child Information',
@@ -115,6 +117,8 @@ const translations = {
     phone: 'Phone:',
     yearsOld: 'years old',
     copyDetails: 'Copy Details',
+    refresh: 'Refresh',
+    refreshing: 'Refreshing...',
     logout: 'Logout'
   }
 };
