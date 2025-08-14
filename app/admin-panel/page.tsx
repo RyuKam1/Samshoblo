@@ -24,10 +24,8 @@ export default function AdminPanel() {
   const [error, setError] = useState('');
   const [storageStats, setStorageStats] = useState<{
     totalRegistrations: number;
-    maxCapacity: number;
     storageUsed: number;
-    capacityPercentage: number;
-    estimatedRemainingCapacity: number;
+    estimatedStorageRemainingMB: number;
     storageMethod: string;
   } | null>(null);
 
@@ -202,17 +200,7 @@ export default function AdminPanel() {
           {/* Storage Statistics */}
           {storageStats && (
             <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
-                <div>
-                  <div className="text-blue-400 font-semibold text-sm">Capacity</div>
-                  <div className="text-white text-lg font-bold">{storageStats.capacityPercentage}%</div>
-                  <div className="text-gray-400 text-xs">{storageStats.totalRegistrations}/{storageStats.maxCapacity}</div>
-                </div>
-                <div>
-                  <div className="text-green-400 font-semibold text-sm">Remaining</div>
-                  <div className="text-white text-lg font-bold">{storageStats.estimatedRemainingCapacity}</div>
-                  <div className="text-gray-400 text-xs">slots available</div>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 text-center">
                 <div>
                   <div className="text-yellow-400 font-semibold text-sm">Storage Used</div>
                   <div className="text-white text-lg font-bold">{storageStats.storageUsed}MB</div>

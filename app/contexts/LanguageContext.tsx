@@ -24,7 +24,7 @@ const translations = {
     professionalTraining: 'პედაგოგები',
     professionalTrainingDesc: 'ცეკვას შეასწავლიან ანსამბლ ერისიონის ყოფილი მოცეკვავე, სერგო ზაქარიაძის უნივერსიტეტის ქორეოგრაფიული მიმართულების კურსდამთავრებული, მედეა ჩახავას თეატრალური აკადემიის ქართული ქორეოგრაფიის თეორიის ლექტორი და ანსამბლ სამშობლოს დამფუძნებელი - <a href="https://www.facebook.com/levani.wiklauri.9022" target="_blank" rel="noopener noreferrer" class="text-amber-400 hover:text-amber-300 font-semibold no-underline transition-colors duration-300">ლევან წიკლაური</a>. შოთა რუსთაველის სახელობის თეატრისა და კინოს სახელმწიფო უნივერსიტეტის ქორეოგრაფიული მიმართულების კურსდამთავრებული და მოქმედი მოცეკვავე - <a href="https://www.facebook.com/sophoomarashvili" target="_blank" rel="noopener noreferrer" class="text-amber-400 hover:text-amber-300 font-semibold no-underline transition-colors duration-300">სოფო ომარაშვილი</a>',
     performanceOpportunities: 'შესაძლებლობები',
-    performanceOpportunitiesDesc: 'ბავშვები მიიღებენ მონაწილეობას როგორცსაქართველოში გამართულ ფესტივლებზე, ასევე საერთაშორისო კონკურს-ფესტივლებზე საქართველოს საზღვრებს გარეთ. 14+ ასაკის მოზარდებს ექნებათ შესაძლებლობა, მიიღონ მონაწილეობა დაფინანსებულ კონკურსებზე საზღვარგარეთ.',
+    performanceOpportunitiesDesc: 'ბავშვები მიიღებენ მონაწილეობას როგორც საქართველოში გამართულ ფესტივლებზე, ასევე საერთაშორისო კონკურს-ფესტივლებზე საქართველოს საზღვრებს გარეთ. 14+ ასაკის მოზარდებს ექნებათ შესაძლებლობა, მიიღონ მონაწილეობა დაფინანსებულ კონკურსებზე საზღვარგარეთ.',
     joinTitle: 'შემოუერთდით ჩვენს ანსამბლს',
     joinSubtitle: 'დაარეგისტრირეთ თქვენი შვილი ანსამბლში',
     childInfo: 'ბავშვის ინფორმაცია',

@@ -24,12 +24,26 @@ export async function POST(request: NextRequest) {
     };
 
     // Save registration using shared storage module
-    const { success, method, removedCount, totalCount } = await addRegistration(registration);
+    const { success, method, removedCount, totalCount, isDuplicate } = await addRegistration(registration);
 
     if (!success) {
       return NextResponse.json(
         { error: 'Failed to save registration. Please try again.' },
         { status: 500 }
+      );
+    }
+
+    if (isDuplicate) {
+      return NextResponse.json(
+        { 
+          message: 'Registration already exists for this child and parent.', 
+          id: registration.id,
+          storageMethod: method,
+          totalRegistrations: totalCount,
+          isDuplicate: true,
+          warning: 'This child is already registered with the same parent contact information.'
+        },
+        { status: 409 } // Conflict status code
       );
     }
 
@@ -40,6 +54,7 @@ export async function POST(request: NextRequest) {
         storageMethod: method,
         totalRegistrations: totalCount,
         removedCount: removedCount || 0,
+        isDuplicate: false,
         warning: method.includes('memory') ? 'Data stored in memory (will be lost on server restart). Please set up Vercel KV for persistent storage.' : undefined
       },
       { status: 201 }

@@ -7,8 +7,6 @@ export async function GET() {
     
     return NextResponse.json({
       ...stats,
-      capacityPercentage: Math.round((stats.totalRegistrations / stats.maxCapacity) * 100),
-      estimatedRemainingCapacity: stats.maxCapacity - stats.totalRegistrations,
       estimatedStorageRemainingMB: 30 - stats.storageUsed // Assuming 30MB Redis limit
     });
   } catch (error) {
