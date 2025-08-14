@@ -122,9 +122,10 @@ export default function Home() {
             
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-white/20 hover:backdrop-blur-md hover:border-amber-500/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/10 min-h-[240px] sm:min-h-[280px] flex flex-col justify-center">
               <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-amber-400">{t('professionalTraining')}</h3>
-              <p className="text-gray-200 leading-relaxed text-sm sm:text-base px-2">
-                {t('professionalTrainingDesc')}
-              </p>
+              <div 
+                className="text-gray-200 leading-relaxed text-sm sm:text-base px-2"
+                dangerouslySetInnerHTML={{ __html: t('professionalTrainingDesc') }}
+              />
             </div>
             
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-white/20 hover:backdrop-blur-md hover:border-amber-500/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/10 min-h-[240px] sm:min-h-[280px] flex flex-col justify-center">

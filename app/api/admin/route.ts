@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRegistrations } from '@/app/lib/storage';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'georgian2024'; // Change this in production
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Samshoblo2020'; // Change this in production
 
 export async function POST(request: NextRequest) {
   try {
