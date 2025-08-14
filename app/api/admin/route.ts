@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
 
 interface RegistrationData {
   childName: string;
@@ -13,7 +12,6 @@ interface RegistrationData {
   id: string;
 }
 
-const dataFilePath = path.join(process.cwd(), 'data', 'registrations.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'georgian2024'; // Change this in production
 
 export async function POST(request: NextRequest) {
@@ -28,13 +26,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Read registrations from file
+    // Read registrations from KV
     let registrations: RegistrationData[] = [];
     try {
-      const existingData = await fs.readFile(dataFilePath, 'utf-8');
-      registrations = JSON.parse(existingData);
+      const existingData = await kv.get('registrations');
+      registrations = existingData ? JSON.parse(existingData as string) : [];
     } catch (error) {
-      // File doesn't exist or is empty, return empty array
+      console.error('Error reading from KV:', error);
+      registrations = [];
     }
 
     // Sort by timestamp (newest first)

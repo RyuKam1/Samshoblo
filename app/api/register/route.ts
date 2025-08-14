@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
 
 interface RegistrationData {
   childName: string;
@@ -12,8 +11,6 @@ interface RegistrationData {
   timestamp: string;
   id: string;
 }
-
-const dataFilePath = path.join(process.cwd(), 'data', 'registrations.json');
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,28 +34,21 @@ export async function POST(request: NextRequest) {
       id: generateId()
     };
 
-    // Ensure data directory exists
-    const dataDir = path.dirname(dataFilePath);
-    try {
-      await fs.access(dataDir);
-    } catch {
-      await fs.mkdir(dataDir, { recursive: true });
-    }
-
-    // Read existing registrations or create empty array
+    // Get existing registrations from KV
     let registrations: RegistrationData[] = [];
     try {
-      const existingData = await fs.readFile(dataFilePath, 'utf-8');
-      registrations = JSON.parse(existingData);
+      const existingData = await kv.get('registrations');
+      registrations = existingData ? JSON.parse(existingData as string) : [];
     } catch (error) {
-      // File doesn't exist or is empty, start with empty array
+      console.error('Error reading from KV:', error);
+      registrations = [];
     }
 
     // Add new registration
     registrations.push(registration);
 
-    // Write back to file
-    await fs.writeFile(dataFilePath, JSON.stringify(registrations, null, 2));
+    // Store back to KV
+    await kv.set('registrations', JSON.stringify(registrations));
 
     return NextResponse.json(
       { message: 'Registration submitted successfully', id: registration.id },
