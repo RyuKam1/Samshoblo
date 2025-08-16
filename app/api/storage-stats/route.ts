@@ -7,7 +7,10 @@ export async function GET() {
     
     return NextResponse.json({
       ...stats,
-      estimatedStorageRemainingMB: 30 - stats.storageUsed // Assuming 30MB Redis limit
+      // Supabase free plan has 500MB storage limit
+      estimatedStorageRemainingMB: 500 - stats.storageUsed,
+      storageLimitMB: 500,
+      storagePlan: 'Supabase Free'
     });
   } catch (error) {
     console.error('Storage stats error:', error);

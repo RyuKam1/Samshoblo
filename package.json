@@ -7,10 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "migrate": "node scripts/migrate-to-kv.js"
+    "migrate": "node scripts/migrate-to-supabase.js"
   },
   "dependencies": {
-    "@vercel/kv": "^3.0.0",
+    "@supabase/supabase-js": "^2.39.0",
     "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"

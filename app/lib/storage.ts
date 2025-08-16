@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { supabase, REGISTRATIONS_TABLE } from './supabase';
 
 export interface RegistrationData {
   childName: string;
@@ -13,43 +13,77 @@ export interface RegistrationData {
 
 // Configuration
 const MAX_REGISTRATIONS = 1000; // Configurable limit - adjust based on your needs
-const STORAGE_KEY = 'registrations';
-
-// Fallback in-memory storage
-let fallbackStorage: RegistrationData[] = [];
 
 export async function getRegistrations(): Promise<{ data: RegistrationData[], method: string }> {
-  const kvConfigured = process.env.KV_URL && process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN;
-  
-  if (kvConfigured) {
-    try {
-      const existingData = await kv.get(STORAGE_KEY);
-      const data = existingData ? JSON.parse(existingData as string) : [];
-      return { data, method: 'vercel-kv' };
-    } catch (error) {
-      console.error('Vercel KV failed, falling back to memory storage:', error);
-      return { data: fallbackStorage, method: 'memory-fallback' };
+  try {
+    const { data, error } = await supabase
+      .from(REGISTRATIONS_TABLE)
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase query error:', error);
+      return { data: [], method: 'supabase-error' };
     }
-  } else {
-    return { data: fallbackStorage, method: 'memory-only' };
+
+    // Transform database format to application format
+    const transformedData: RegistrationData[] = (data || []).map(row => ({
+      childName: row.child_name,
+      childSurname: row.child_surname,
+      childAge: row.child_age,
+      parentName: row.parent_name,
+      parentSurname: row.parent_surname,
+      parentPhone: row.parent_phone,
+      timestamp: row.timestamp,
+      id: row.id
+    }));
+
+    return { data: transformedData, method: 'supabase' };
+  } catch (error) {
+    console.error('Supabase operation failed:', error);
+    return { data: [], method: 'supabase-error' };
   }
 }
 
 export async function saveRegistrations(registrations: RegistrationData[]): Promise<{ success: boolean, method: string }> {
-  const kvConfigured = process.env.KV_URL && process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN;
-  
-  if (kvConfigured) {
-    try {
-      await kv.set(STORAGE_KEY, JSON.stringify(registrations));
-      return { success: true, method: 'vercel-kv' };
-    } catch (error) {
-      console.error('Vercel KV failed, falling back to memory storage:', error);
-      fallbackStorage = registrations;
-      return { success: true, method: 'memory-fallback' };
+  try {
+    // Transform application format to database format
+    const dbData = registrations.map(reg => ({
+      id: reg.id,
+      child_name: reg.childName,
+      child_surname: reg.childSurname,
+      child_age: reg.childAge,
+      parent_name: reg.parentName,
+      parent_surname: reg.parentSurname,
+      parent_phone: reg.parentPhone,
+      timestamp: reg.timestamp
+    }));
+
+    // First, delete all existing records
+    const { error: deleteError } = await supabase
+      .from(REGISTRATIONS_TABLE)
+      .delete()
+      .neq('id', ''); // Delete all records
+
+    if (deleteError) {
+      console.error('Error deleting existing records:', deleteError);
+      return { success: false, method: 'supabase-delete-error' };
     }
-  } else {
-    fallbackStorage = registrations;
-    return { success: true, method: 'memory-only' };
+
+    // Then insert all records
+    const { error: insertError } = await supabase
+      .from(REGISTRATIONS_TABLE)
+      .insert(dbData);
+
+    if (insertError) {
+      console.error('Error inserting records:', insertError);
+      return { success: false, method: 'supabase-insert-error' };
+    }
+
+    return { success: true, method: 'supabase' };
+  } catch (error) {
+    console.error('Supabase save operation failed:', error);
+    return { success: false, method: 'supabase-error' };
   }
 }
 
@@ -60,136 +94,88 @@ export async function addRegistration(registration: RegistrationData): Promise<{
   totalCount: number,
   isDuplicate?: boolean
 }> {
-  const kvConfigured = process.env.KV_URL && process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN;
-  
-  if (kvConfigured) {
-    try {
-      // Use a more reliable approach with retry mechanism
-      let retries = 3;
-      let lastError: unknown;
-      
-      while (retries > 0) {
-        try {
-          // Get current data
-          const existingData = await kv.get(STORAGE_KEY);
-          const existingRegistrations = existingData ? JSON.parse(existingData as string) : [];
-          
-          // Check for duplicate registration (same phone number and child name)
-          const isDuplicate = existingRegistrations.some((existing: RegistrationData) => 
-            existing.parentPhone === registration.parentPhone && 
-            existing.childName === registration.childName &&
-            existing.childSurname === registration.childSurname
-          );
-          
-          if (isDuplicate) {
-            return {
-              success: true,
-              method: 'vercel-kv-duplicate',
-              removedCount: 0,
-              totalCount: existingRegistrations.length,
-              isDuplicate: true
-            };
-          }
-          
-          // Add new registration
-          const updatedRegistrations = [...existingRegistrations, registration];
-          
-          // Use Redis WATCH/MULTI/EXEC for atomicity
-          const multi = kv.multi();
-          multi.set(STORAGE_KEY, JSON.stringify(updatedRegistrations));
-          await multi.exec();
-          
-          return {
-            success: true,
-            method: 'vercel-kv-atomic',
-            removedCount: 0,
-            totalCount: updatedRegistrations.length,
-            isDuplicate: false
-          };
-        } catch (error) {
-          lastError = error;
-          retries--;
-          if (retries > 0) {
-            // Wait a bit before retrying
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-        }
-      }
-      
-      // If all retries failed, fall back to standard method
-      console.error('Atomic operations failed after retries, using fallback:', lastError);
-      const { data: existingRegistrations } = await getRegistrations();
-      
-      // Check for duplicate in fallback method too
-      const isDuplicate = existingRegistrations.some((existing: RegistrationData) => 
-        existing.parentPhone === registration.parentPhone && 
-        existing.childName === registration.childName &&
-        existing.childSurname === registration.childSurname
-      );
-      
-      if (isDuplicate) {
-        return {
-          success: true,
-          method: 'memory-fallback-duplicate',
-          removedCount: 0,
-          totalCount: existingRegistrations.length,
-          isDuplicate: true
-        };
-      }
-      
-      const updatedRegistrations = [...existingRegistrations, registration];
-      const result = await saveRegistrations(updatedRegistrations);
-      
-      return {
-        ...result,
+  try {
+    // Check for duplicate registration (same phone number and child name)
+    const { data: existingData, error: queryError } = await supabase
+      .from(REGISTRATIONS_TABLE)
+      .select('*')
+      .eq('parent_phone', registration.parentPhone)
+      .eq('child_name', registration.childName)
+      .eq('child_surname', registration.childSurname);
+
+    if (queryError) {
+      console.error('Error checking for duplicates:', queryError);
+      return { 
+        success: false, 
+        method: 'supabase-query-error',
         removedCount: 0,
-        totalCount: updatedRegistrations.length,
-        isDuplicate: false
-      };
-    } catch (error) {
-      console.error('KV operation failed, falling back to standard method:', error);
-      // Fallback to standard method
-      const { data: existingRegistrations } = await getRegistrations();
-      const updatedRegistrations = [...existingRegistrations, registration];
-      const result = await saveRegistrations(updatedRegistrations);
-      
-      return {
-        ...result,
-        removedCount: 0,
-        totalCount: updatedRegistrations.length
+        totalCount: 0
       };
     }
-      } else {
-      // For in-memory storage, use a simple approach
-      const { data: existingRegistrations } = await getRegistrations();
-      
-      // Check for duplicate in memory storage too
-      const isDuplicate = existingRegistrations.some((existing: RegistrationData) => 
-        existing.parentPhone === registration.parentPhone && 
-        existing.childName === registration.childName &&
-        existing.childSurname === registration.childSurname
-      );
-      
-      if (isDuplicate) {
-        return {
-          success: true,
-          method: 'memory-only-duplicate',
-          removedCount: 0,
-          totalCount: existingRegistrations.length,
-          isDuplicate: true
-        };
-      }
-      
-      const updatedRegistrations = [...existingRegistrations, registration];
-      const result = await saveRegistrations(updatedRegistrations);
-      
+
+    if (existingData && existingData.length > 0) {
+      // Get total count for response
+      const { count } = await supabase
+        .from(REGISTRATIONS_TABLE)
+        .select('*', { count: 'exact', head: true });
+
       return {
-        ...result,
+        success: true,
+        method: 'supabase-duplicate',
         removedCount: 0,
-        totalCount: updatedRegistrations.length,
-        isDuplicate: false
+        totalCount: count || 0,
+        isDuplicate: true
       };
     }
+
+    // Transform to database format
+    const dbData = {
+      id: registration.id,
+      child_name: registration.childName,
+      child_surname: registration.childSurname,
+      child_age: registration.childAge,
+      parent_name: registration.parentName,
+      parent_surname: registration.parentSurname,
+      parent_phone: registration.parentPhone,
+      timestamp: registration.timestamp
+    };
+
+    // Insert new registration
+    const { error: insertError } = await supabase
+      .from(REGISTRATIONS_TABLE)
+      .insert(dbData);
+
+    if (insertError) {
+      console.error('Error inserting registration:', insertError);
+      return { 
+        success: false, 
+        method: 'supabase-insert-error',
+        removedCount: 0,
+        totalCount: 0
+      };
+    }
+
+    // Get updated total count
+    const { count } = await supabase
+      .from(REGISTRATIONS_TABLE)
+      .select('*', { count: 'exact', head: true });
+
+    return {
+      success: true,
+      method: 'supabase',
+      removedCount: 0,
+      totalCount: count || 0,
+      isDuplicate: false
+    };
+  } catch (error) {
+    console.error('Supabase add registration failed:', error);
+    return { 
+      success: false, 
+      method: 'supabase-error',
+      removedCount: 0,
+      totalCount: 0
+    };
+  }
 }
 
 // Helper function to get storage statistics
@@ -198,13 +184,36 @@ export async function getStorageStats(): Promise<{
   storageUsed: number;
   storageMethod: string;
 }> {
-  const { data: registrations, method } = await getRegistrations();
-  const totalSize = JSON.stringify(registrations).length;
-  const storageUsedMB = (totalSize / (1024 * 1024)).toFixed(2);
-  
-  return {
-    totalRegistrations: registrations.length,
-    storageUsed: parseFloat(storageUsedMB),
-    storageMethod: method
-  };
+  try {
+    const { count, error } = await supabase
+      .from(REGISTRATIONS_TABLE)
+      .select('*', { count: 'exact', head: true });
+
+    if (error) {
+      console.error('Error getting count:', error);
+      return {
+        totalRegistrations: 0,
+        storageUsed: 0,
+        storageMethod: 'supabase-error'
+      };
+    }
+
+    // Estimate storage usage (rough calculation)
+    const estimatedBytesPerRecord = 500; // Approximate bytes per registration record
+    const totalBytes = (count || 0) * estimatedBytesPerRecord;
+    const storageUsedMB = (totalBytes / (1024 * 1024)).toFixed(2);
+
+    return {
+      totalRegistrations: count || 0,
+      storageUsed: parseFloat(storageUsedMB),
+      storageMethod: 'supabase'
+    };
+  } catch (error) {
+    console.error('Error getting storage stats:', error);
+    return {
+      totalRegistrations: 0,
+      storageUsed: 0,
+      storageMethod: 'supabase-error'
+    };
+  }
 }
