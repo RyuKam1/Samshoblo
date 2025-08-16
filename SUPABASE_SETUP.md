@@ -38,21 +38,25 @@ CREATE TABLE registrations (
   parent_name TEXT NOT NULL,
   parent_surname TEXT NOT NULL,
   parent_phone TEXT NOT NULL,
-  timestamp TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  timestamp TEXT NOT NULL
 );
 
 -- Create indexes for better performance
 CREATE INDEX idx_registrations_parent_phone ON registrations(parent_phone);
 CREATE INDEX idx_registrations_child_name ON registrations(child_name);
 CREATE INDEX idx_registrations_child_surname ON registrations(child_surname);
-CREATE INDEX idx_registrations_created_at ON registrations(created_at);
+CREATE INDEX idx_registrations_timestamp ON registrations(timestamp);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE registrations ENABLE ROW LEVEL SECURITY;
 
 -- Create policy to allow all operations (you can restrict this later)
-CREATE POLICY "Allow all operations" ON registrations FOR ALL USING (true);
+CREATE POLICY "Allow all operations on registrations"
+ON registrations
+FOR ALL
+TO anon
+USING (true)
+WITH CHECK (true);
 ```
 
 4. Click "Run" to execute the SQL

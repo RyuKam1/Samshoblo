@@ -39,7 +39,6 @@ export interface Database {
           parent_surname: string;
           parent_phone: string;
           timestamp: string;
-          created_at: string;
         };
         Insert: {
           id?: string;
@@ -50,7 +49,6 @@ export interface Database {
           parent_surname: string;
           parent_phone: string;
           timestamp: string;
-          created_at?: string;
         };
         Update: {
           id?: string;
@@ -61,7 +59,6 @@ export interface Database {
           parent_surname?: string;
           parent_phone?: string;
           timestamp?: string;
-          created_at?: string;
         };
       };
     };
