@@ -16,15 +16,19 @@ const MAX_REGISTRATIONS = 1000; // Configurable limit - adjust based on your nee
 
 export async function getRegistrations(): Promise<{ data: RegistrationData[], method: string }> {
   try {
+    console.log('🔍 Fetching registrations from Supabase...');
+    
     const { data, error } = await supabase
       .from(REGISTRATIONS_TABLE)
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Supabase query error:', error);
+      console.error('❌ Supabase query error:', error);
       return { data: [], method: 'supabase-error' };
     }
+
+    console.log(`✅ Successfully fetched ${data?.length || 0} registrations`);
 
     // Transform database format to application format
     const transformedData: RegistrationData[] = (data || []).map(row => ({
@@ -40,14 +44,16 @@ export async function getRegistrations(): Promise<{ data: RegistrationData[], me
 
     return { data: transformedData, method: 'supabase' };
   } catch (error) {
-    console.error('Supabase operation failed:', error);
+    console.error('❌ Supabase operation failed:', error);
     return { data: [], method: 'supabase-error' };
   }
 }
 
 export async function saveRegistrations(registrations: RegistrationData[]): Promise<{ success: boolean, method: string }> {
   try {
-    // Transform application format to database format
+    console.log('💾 Saving registrations to Supabase...');
+    
+    // Transform application format to database format - DON'T include created_at
     const dbData = registrations.map(reg => ({
       id: reg.id,
       child_name: reg.childName,
@@ -57,6 +63,7 @@ export async function saveRegistrations(registrations: RegistrationData[]): Prom
       parent_surname: reg.parentSurname,
       parent_phone: reg.parentPhone,
       timestamp: reg.timestamp
+      // created_at will be automatically set by Supabase
     }));
 
     // First, delete all existing records
@@ -66,7 +73,7 @@ export async function saveRegistrations(registrations: RegistrationData[]): Prom
       .neq('id', ''); // Delete all records
 
     if (deleteError) {
-      console.error('Error deleting existing records:', deleteError);
+      console.error('❌ Error deleting existing records:', deleteError);
       return { success: false, method: 'supabase-delete-error' };
     }
 
@@ -76,13 +83,14 @@ export async function saveRegistrations(registrations: RegistrationData[]): Prom
       .insert(dbData);
 
     if (insertError) {
-      console.error('Error inserting records:', insertError);
+      console.error('❌ Error inserting records:', insertError);
       return { success: false, method: 'supabase-insert-error' };
     }
 
+    console.log('✅ Successfully saved registrations to Supabase');
     return { success: true, method: 'supabase' };
   } catch (error) {
-    console.error('Supabase save operation failed:', error);
+    console.error('❌ Supabase save operation failed:', error);
     return { success: false, method: 'supabase-error' };
   }
 }
@@ -95,6 +103,9 @@ export async function addRegistration(registration: RegistrationData): Promise<{
   isDuplicate?: boolean
 }> {
   try {
+    console.log('➕ Adding new registration to Supabase...');
+    console.log('Registration data:', registration);
+    
     // Check for duplicate registration (same phone number and child name)
     const { data: existingData, error: queryError } = await supabase
       .from(REGISTRATIONS_TABLE)
@@ -104,7 +115,7 @@ export async function addRegistration(registration: RegistrationData): Promise<{
       .eq('child_surname', registration.childSurname);
 
     if (queryError) {
-      console.error('Error checking for duplicates:', queryError);
+      console.error('❌ Error checking for duplicates:', queryError);
       return { 
         success: false, 
         method: 'supabase-query-error',
@@ -114,6 +125,7 @@ export async function addRegistration(registration: RegistrationData): Promise<{
     }
 
     if (existingData && existingData.length > 0) {
+      console.log('⚠️ Duplicate registration found');
       // Get total count for response
       const { count } = await supabase
         .from(REGISTRATIONS_TABLE)
@@ -128,7 +140,7 @@ export async function addRegistration(registration: RegistrationData): Promise<{
       };
     }
 
-    // Transform to database format
+    // Transform to database format - DON'T include created_at, let Supabase handle it
     const dbData = {
       id: registration.id,
       child_name: registration.childName,
@@ -138,15 +150,25 @@ export async function addRegistration(registration: RegistrationData): Promise<{
       parent_surname: registration.parentSurname,
       parent_phone: registration.parentPhone,
       timestamp: registration.timestamp
+      // created_at will be automatically set by Supabase
     };
 
+    console.log('Inserting database record:', dbData);
+
     // Insert new registration
-    const { error: insertError } = await supabase
+    const { data: insertData, error: insertError } = await supabase
       .from(REGISTRATIONS_TABLE)
-      .insert(dbData);
+      .insert(dbData)
+      .select();
 
     if (insertError) {
-      console.error('Error inserting registration:', insertError);
+      console.error('❌ Error inserting registration:', insertError);
+      console.error('Error details:', {
+        message: insertError.message,
+        code: insertError.code,
+        details: insertError.details,
+        hint: insertError.hint
+      });
       return { 
         success: false, 
         method: 'supabase-insert-error',
@@ -154,6 +176,8 @@ export async function addRegistration(registration: RegistrationData): Promise<{
         totalCount: 0
       };
     }
+
+    console.log('✅ Registration inserted successfully:', insertData);
 
     // Get updated total count
     const { count } = await supabase
@@ -168,7 +192,7 @@ export async function addRegistration(registration: RegistrationData): Promise<{
       isDuplicate: false
     };
   } catch (error) {
-    console.error('Supabase add registration failed:', error);
+    console.error('❌ Supabase add registration failed:', error);
     return { 
       success: false, 
       method: 'supabase-error',
@@ -185,12 +209,14 @@ export async function getStorageStats(): Promise<{
   storageMethod: string;
 }> {
   try {
+    console.log('📊 Getting storage statistics...');
+    
     const { count, error } = await supabase
       .from(REGISTRATIONS_TABLE)
       .select('*', { count: 'exact', head: true });
 
     if (error) {
-      console.error('Error getting count:', error);
+      console.error('❌ Error getting count:', error);
       return {
         totalRegistrations: 0,
         storageUsed: 0,
@@ -203,13 +229,15 @@ export async function getStorageStats(): Promise<{
     const totalBytes = (count || 0) * estimatedBytesPerRecord;
     const storageUsedMB = (totalBytes / (1024 * 1024)).toFixed(2);
 
+    console.log(`✅ Storage stats: ${count} registrations, ${storageUsedMB}MB used`);
+
     return {
       totalRegistrations: count || 0,
       storageUsed: parseFloat(storageUsedMB),
       storageMethod: 'supabase'
     };
   } catch (error) {
-    console.error('Error getting storage stats:', error);
+    console.error('❌ Error getting storage stats:', error);
     return {
       totalRegistrations: 0,
       storageUsed: 0,
