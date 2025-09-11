@@ -1,4 +1,5 @@
 import { supabase, REGISTRATIONS_TABLE } from './supabase';
+// import { supabase, REGISTRATIONS_TABLE } from './supabase';
 
 export interface RegistrationData {
   childName: string;
