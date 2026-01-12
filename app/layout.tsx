@@ -15,7 +15,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ანსამბლი 'სამშობლო' - Georgian Dance Ensemble",
-  description: "Experience the grace, passion, and cultural heritage of traditional Georgian dance. Join our ensemble and become part of a centuries-old tradition.",
+  description:
+    "Experience the grace, passion, and cultural heritage of traditional Georgian dance. Join our ensemble and become part of a centuries-old tradition.",
+  manifest: "/manifest.json",
+  themeColor: "#f59e0b",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 };
 
 export default function RootLayout({
@@ -28,9 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );
