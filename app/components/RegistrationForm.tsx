@@ -62,6 +62,7 @@ export default function RegistrationForm() {
         setSubmitStatus('error');
       }
     } catch (error) {
+      console.error('Registration failed:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);

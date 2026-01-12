@@ -17,16 +17,14 @@ export async function GET(request: Request) {
     // 1. Insert a new heartbeat
     const { error: insertError } = await supabase
       .from('heartbeats')
-      .insert([
-        { 
-          info: `Keep-alive heartbeat at ${new Date().toISOString()}`,
-          created_at: new Date().toISOString()
-        }
-      ]);
+      .insert({ 
+        info: `Keep-alive heartbeat at ${new Date().toISOString()}`,
+        created_at: new Date().toISOString()
+      });
 
     if (insertError) {
       console.error('Error inserting heartbeat:', insertError);
-      return NextResponse.json({ error: 'Failed to insert heartbeat' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to insert heartbeat', details: insertError.message }, { status: 500 });
     }
 
     // 2. Cleanup old heartbeats (older than 24 hours)
@@ -46,8 +44,9 @@ export async function GET(request: Request) {
       message: 'Keep-alive successful',
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Keep-alive error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

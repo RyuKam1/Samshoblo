@@ -1,21 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Support new POSTGRES_-prefixed env names with fallback to existing names
-const supabaseUrl = process.env.POSTGRES_NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.POSTGRES_NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.POSTGRES_NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.POSTGRES_NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
 
 // Add logging to debug environment variables
-console.log('Supabase URL:', supabaseUrl ? 'Set' : 'Missing');
-console.log('Supabase Anon Key:', supabaseAnonKey ? 'Set' : 'Missing');
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables:');
-  console.error('POSTGRES_NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl);
-  console.error('POSTGRES_NEXT_PUBLIC_SUPABASE_ANON_KEY/NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Present' : 'Missing');
-  throw new Error('Missing Supabase environment variables');
+if (typeof window === 'undefined') {
+  console.log('Supabase URL:', supabaseUrl === 'https://placeholder.supabase.co' ? 'Missing' : 'Set');
+  console.log('Supabase Anon Key:', supabaseAnonKey === 'placeholder' ? 'Missing' : 'Set');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
@@ -23,8 +18,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Database table name
+// Database table names
 export const REGISTRATIONS_TABLE = 'registrations';
+export const HEARTBEATS_TABLE = 'heartbeats';
 
 // Database schema types
 export interface Database {
@@ -60,6 +56,23 @@ export interface Database {
           parent_surname?: string;
           parent_phone?: string;
           timestamp?: string;
+        };
+      };
+      heartbeats: {
+        Row: {
+          id: string;
+          created_at: string;
+          info: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          info?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          info?: string | null;
         };
       };
     };

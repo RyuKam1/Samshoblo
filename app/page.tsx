@@ -14,8 +14,6 @@ export default function Home() {
       // Get the form element's position
       const formElement = formRef.current;
       const formTop = formElement.offsetTop;
-      const windowHeight = window.innerHeight;
-      
       // Calculate scroll position with offset for better mobile experience
       const scrollPosition = formTop - 80; // 80px offset for better positioning
       
@@ -34,7 +32,7 @@ export default function Home() {
 
   // Ensure smooth scrolling is supported
   useEffect(() => {
-    if (!CSS.supports('scroll-behavior', 'smooth')) {
+    if (typeof window !== 'undefined' && !CSS.supports('scroll-behavior', 'smooth')) {
       document.documentElement.style.scrollBehavior = 'auto';
     }
   }, []);
@@ -100,7 +98,10 @@ export default function Home() {
           <img 
             src="/dancePic.jpg" 
             alt="Georgian Dance Background"
+            width={1920}
+            height={1080}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         </div>
         

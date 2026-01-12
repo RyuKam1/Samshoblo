@@ -104,7 +104,7 @@ export function getSubscriptionCount(): number {
 export async function sendNotificationToAll(
   title: string,
   body: string,
-  data?: any
+  data?: Record<string, unknown>
 ) {
   if (subscriptions.length === 0) {
     console.log("No active subscriptions to send notifications to");
@@ -152,7 +152,7 @@ export async function sendNotificationToAll(
           data: {
             url: "/admin-panel",
             ...Object.fromEntries(
-              Object.entries(data).map(([key, value]) => [
+              Object.entries(data || {}).map(([key, value]) => [
                 key,
                 typeof value === "object"
                   ? JSON.stringify(value)
@@ -211,11 +211,12 @@ export async function sendNotificationToAll(
           console.log(
             `Firebase notification sent successfully to ${subscription.endpoint}. Message ID: ${response}`
           );
-        } catch (fcmError: any) {
+        } catch (fcmError: unknown) {
+          const errorPayload = fcmError as { code?: string; message?: string; errorInfo?: unknown };
           console.error("FCM v1 API Error details:", {
-            code: fcmError.code,
-            message: fcmError.message,
-            errorInfo: fcmError.errorInfo,
+            code: errorPayload.code,
+            message: errorPayload.message,
+            errorInfo: errorPayload.errorInfo,
             projectId: process.env.FIREBASE_PROJECT_ID,
             token: fcmToken.substring(0, 20) + "...",
             apiVersion: "v1",
@@ -223,9 +224,9 @@ export async function sendNotificationToAll(
 
           // Handle specific FCM error codes
           if (
-            fcmError.code === "messaging/registration-token-not-registered" ||
-            fcmError.code === "messaging/invalid-registration-token" ||
-            fcmError.code === "messaging/registration-token-expired"
+            errorPayload.code === "messaging/registration-token-not-registered" ||
+            errorPayload.code === "messaging/invalid-registration-token" ||
+            errorPayload.code === "messaging/registration-token-expired"
           ) {
             console.warn(
               `FCM token is invalid/expired: ${fcmToken.substring(0, 20)}...`
@@ -238,8 +239,8 @@ export async function sendNotificationToAll(
               `Removed invalid FCM subscription. Total subscriptions: ${subscriptions.length}`
             );
           } else if (
-            fcmError.code === "messaging/unsupported-credential" ||
-            fcmError.code === "messaging/invalid-credential"
+            errorPayload.code === "messaging/unsupported-credential" ||
+            errorPayload.code === "messaging/invalid-credential"
           ) {
             console.error(
               "Firebase credentials issue. Check your service account configuration."
@@ -319,7 +320,8 @@ export async function sendNotificationToAll(
           `Web push notification sent successfully to ${subscription.endpoint}. Status: ${response.statusCode}`
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const e = error as { statusCode?: number; code?: string; message?: string };
       console.error(
         `Failed to send notification to ${subscription.endpoint}:`,
         error
@@ -327,13 +329,13 @@ export async function sendNotificationToAll(
 
       // If subscription is expired or invalid, remove it
       if (
-        error.statusCode === 410 || // Gone (subscription expired)
-        error.statusCode === 404 || // Not Found
-        error.statusCode === 401 || // Unauthorized
-        error.code === "messaging/registration-token-not-registered" ||
-        error.code === "messaging/invalid-registration-token" ||
-        error.code === "messaging/registration-token-expired" ||
-        error.message?.includes("failed")
+        e.statusCode === 410 || // Gone (subscription expired)
+        e.statusCode === 404 || // Not Found
+        e.statusCode === 401 || // Unauthorized
+        e.code === "messaging/registration-token-not-registered" ||
+        e.code === "messaging/invalid-registration-token" ||
+        e.code === "messaging/registration-token-expired" ||
+        e.message?.includes("failed")
       ) {
         subscriptions = subscriptions.filter(
           (sub) => sub.endpoint !== subscription.endpoint

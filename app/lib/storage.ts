@@ -13,7 +13,7 @@ export interface RegistrationData {
 }
 
 // Configuration
-const MAX_REGISTRATIONS = 1000; // Configurable limit - adjust based on your needs
+// Removed unused MAX_REGISTRATIONS
 
 export async function getRegistrations(): Promise<{ data: RegistrationData[], method: string }> {
   try {

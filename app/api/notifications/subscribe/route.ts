@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   addSubscription,
   removeSubscription,
-  getSubscriptionCount,
 } from "@/app/lib/notifications";
 
 export async function POST(request: NextRequest) {
